@@ -14,7 +14,7 @@ import numpy as np
 
 import tkinter as tk
 from tkinter import filedialog as fd
-from tkinter import messagebox, StringVar, Listbox
+from tkinter import messagebox, StringVar
 from tkinter.ttk import Scrollbar, Notebook, Combobox
 import tkinter.scrolledtext as scrolledtext
 
@@ -273,6 +273,7 @@ class CustomWidget(tk.Frame):
         #Dictionary to match id to question index
         self.index = df.question.tolist()
         self.hint = []
+        self.hintlabel = []
         self.combo = []
         self.score = []
         self.scoresv = []
@@ -291,6 +292,7 @@ class CustomWidget(tk.Frame):
             h = StringVar()
             y = tk.Label(self.frame_components, text="<>", anchor='e', textvariable=h)
             self.hint.append(h)
+            self.hintlabel.append(y)
             
             s = StringVar()
             self.scoresv.append(s)
@@ -449,6 +451,8 @@ class CustomWidget(tk.Frame):
       outcomes = self.owner.config.outcomes[self.owner.config.outcomes.id == self.sid]
       outcomes["major"] = [x.split('.',1)[0] for x in outcomes.question]
       
+      firstname = self.owner.config.classlist.loc[self.owner.config.classlist.id == self.sid, 'first'][0]
+      
       name = self.idcombo.get()
       
       pdf = PDF()
@@ -471,6 +475,7 @@ class CustomWidget(tk.Frame):
           question = f'{str(df.iloc[i,0])}. {df.iloc[i,1]}'
           score = clean(self.scoresv[i].get())
           feedback = clean(self.text[i].get("1.0", "end"))
+          feedback = feedback.replace("<name>", firstname)
           
           #Question with marks available?
           if pd.isnull(self.owner.config.questions.iloc[i,2]):
@@ -489,6 +494,8 @@ class CustomWidget(tk.Frame):
           
           score = clean(self.scoresv[i].get())
           feedback = clean(self.text[i].get("1.0", "end"))
+          print(classmember, type(classmember))
+          feedback = feedback.replace("<name>", firstname)
           
           #Question with marks available?
           if pd.isnull(self.owner.config.questions.iloc[i,2]):
@@ -611,8 +618,10 @@ class CustomWidget(tk.Frame):
         df = df[(df.question==q) & (df.feedback==stext)]
 
         values = df.score
-          
         values = [x for x in values if isinstance(x,(int,float)) and not np.isnan(x)]
+        
+        self.hintlabel[index].config(fg="black")
+        maxscore = self.owner.config.questions.marks[index]
         
         if len(values)==0:
           self.hint[index].set("[?]")
@@ -620,7 +629,10 @@ class CustomWidget(tk.Frame):
           a = min(values)
           b = max(values)
           
-          if a==b:
+          if b>maxscore:
+            self.hint[index].set("["+str(a)+"-"+str(b)+"] max exceeded!")
+            self.hintlabel[index].config(fg="red")
+          elif a==b:
             self.hint[index].set("["+str(a)+"]")
           else:
             self.hint[index].set("["+str(a)+"-"+str(b)+"]")
@@ -1147,7 +1159,7 @@ class StatusBar(tk.Frame):
       tk.Frame.__init__(self, parent)
       self.label = tk.Label(self, bd = 1, relief = tk.SUNKEN, anchor = "w")
       self.label.pack(fill="x")
-      self.default = "version 1.0.8.BETA"
+      self.default = "version 1.0.9.BETA"
       
    def settext(self, text, warning=False):
       
