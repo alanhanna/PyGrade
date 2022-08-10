@@ -265,11 +265,13 @@ class Canvas(tk.Frame):
         #Create df to map to files and marks
         self.df = pd.DataFrame.from_dict(self.students).T
         self.df.sid = self.df.sid.apply(str)
-        self.df['file'] = ""
-        self.df['uploadcount'] = 0
         self.df['canvasscore'] = ""
+        self.df['uploadcount'] = 0
         self.df['uploads'] = ""
+        
+        self.df['file'] = ""
         self.df['added'] = ""
+        
         self.df['score'] = ""
         self.df['feedback'] = ""
         
