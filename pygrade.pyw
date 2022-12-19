@@ -367,6 +367,8 @@ class CustomWidget(tk.Frame):
       
       df = self.owner.config.questions
       
+      firstname = self.owner.config.classlist.loc[self.owner.config.classlist.id == self.sid, 'first'][0]
+      
       feedback = ""
       for i in range(self.n):
         
@@ -375,8 +377,9 @@ class CustomWidget(tk.Frame):
         if not pd.isnull(df.iloc[i,2]):
           score = clean(self.scoresv[i].get())
           feedback += f'[{score}/{df.iloc[i,2]}]\n\n'
-
-        feedback += clean(self.text[i].get("1.0", "end"))
+        
+        txt = clean(self.text[i].get("1.0", "end"))
+        feedback += txt.replace("<name>", firstname)
         feedback += "\n\n"
       
       t.insert('0.0', feedback)
@@ -494,7 +497,6 @@ class CustomWidget(tk.Frame):
           
           score = clean(self.scoresv[i].get())
           feedback = clean(self.text[i].get("1.0", "end"))
-          print(classmember, type(classmember))
           feedback = feedback.replace("<name>", firstname)
           
           #Question with marks available?
@@ -1159,7 +1161,7 @@ class StatusBar(tk.Frame):
       tk.Frame.__init__(self, parent)
       self.label = tk.Label(self, bd = 1, relief = tk.SUNKEN, anchor = "w")
       self.label.pack(fill="x")
-      self.default = "version 1.0.9.BETA"
+      self.default = "version 1.0.10.BETA"
       
    def settext(self, text, warning=False):
       
