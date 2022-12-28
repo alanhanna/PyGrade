@@ -20,6 +20,9 @@ class commentbank(tk.Frame):
         self.loaddata(filename)
         self.logger = logger
         
+        #New feedback comments added manually
+        self.newcomment = ""
+        
         self.catlabel = tk.Label(self, text='Category', anchor='w', borderwidth=2, justify='left')
         self.catlabel.grid(row=0, column=0, padx=0, sticky='nw')
         self.catlabel.config(font=("Arial", 20))
@@ -145,8 +148,8 @@ class commentbank(tk.Frame):
         for i, value in enumerate(df.feedback.sort_values(ascending=True)):
           self.feedback.insert(i, value)
           
-        self.feedback.select_set(0) #This only sets focus on the first item.
-        self.feedback.event_generate("<<ListboxSelect>>")
+        #self.feedback.select_set(0) #This only sets focus on the first item.
+        #self.feedback.event_generate("<<ListboxSelect>>")
       
       except:
         pass
@@ -181,18 +184,21 @@ class commentbank(tk.Frame):
       i = self.category.curselection()[0]
       cat =self.category.get(i)
       
-      newcomment = self.feedbacktext.get()
+      self.newcomment = self.feedbacktext.get()
       
       df = self.bank[self.bank.category==cat]
       
-      if df.feedback.str.contains(newcomment).any():
+      if df.feedback.str.contains(self.newcomment).any():        
+        self.newcomment = ""
         return
       
-      if newcomment!="":
-        self.bank = pd.concat([self.bank, pd.DataFrame({"category": [cat], "feedback": [newcomment]})], ignore_index=True)
+      if self.newcomment!="":
+        self.sendtoclipboard(self.newcomment)
+        self.bank = pd.concat([self.bank, pd.DataFrame({"category": [cat], "feedback": [self.newcomment]})], ignore_index=True)
         
         self.categoryselect()
         self.save()
+        self.newcomment = ""
         
     def categoryremove(self, event = None):
       
@@ -256,11 +262,12 @@ class commentbank(tk.Frame):
       cat =self.category.get(i)
       
       j = self.feedback.curselection()[0]
-      feedback = self.feedback.get(j)
+      feedback = self.feedback.get(j)      
       
       k = self.bank.index[(self.bank.category==cat) & (self.bank.feedback==feedback)]
       
       newcomment = self.feedbacktext.get()
+      self.sendtoclipboard(newcomment)
       
       if len(k)>0:
         self.bank.feedback[k] = newcomment
@@ -275,23 +282,34 @@ class commentbank(tk.Frame):
             self.feedback.select_set(i)
             break
 
-
     def feedbackselect(self, event = None):
+    
       try:
-        i = self.feedback.curselection()[0]
-        text = self.feedback.get(i)
         
-        if self.includereturn.get():
-          feedback = text+"\n"
+        print(self.newcomment)
+        
+        if self.newcomment != "":
+          #Don't change selection or update clipboard
+          return
         else:
-          feedback = text
+          i = self.feedback.curselection()[0]
+          text = self.feedback.get(i)
         
-        pc.copy(feedback)
-        
+        self.sendtoclipboard(text)
         self.feedbacktext.set(text)
         
       except:
         pass
+
+    def sendtoclipboard(self, text):
+      
+      if self.includereturn.get():
+        feedback = text+"\n"
+      else:
+        feedback = text
+      
+      pc.copy(feedback)
+      
 
     def togglereturn(self):
       self.feedbackselect()

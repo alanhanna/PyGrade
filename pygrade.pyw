@@ -163,7 +163,10 @@ class PDF(FPDF):
       self.print_feedback(feedback)
       
 #------------------------------------------------------------------------------
+#Helper functions
+
 def clean(text):
+  """convert to string or strip"""
   try:
     if isinstance(text,str):
       return text.strip()
@@ -171,10 +174,12 @@ def clean(text):
       return str(text)
 
 def numericcolumn(dfcol):
-  return  pd.to_numeric(dfcol, errors='coerce')
+  """Convert to dataframe column to numeric values"""
+  return pd.to_numeric(dfcol, errors='coerce')
 
 def flatten(t):
-    return [item for sublist in t for item in sublist]
+  """Flatten a list of lists"""
+  return [item for sublist in t for item in sublist]
   
 def extractid(filename, n=8):
   """Extract digits from file matching student id"""
@@ -182,7 +187,7 @@ def extractid(filename, n=8):
   return [y for y in x if len(y)==n]
 
 def shortstrnum(value):
-  
+  """Convert to string but truncate for integers"""
   if float(value).is_integer():
     return str(int(value))
   else:
@@ -453,8 +458,8 @@ class CustomWidget(tk.Frame):
       
       outcomes = self.owner.config.outcomes[self.owner.config.outcomes.id == self.sid]
       outcomes["major"] = [x.split('.',1)[0] for x in outcomes.question]
-      
-      firstname = self.owner.config.classlist.loc[self.owner.config.classlist.id == self.sid, 'first'][0]
+
+      firstname = self.owner.config.classlist.loc[self.owner.config.classlist.id == self.sid, 'first'].iat[0]
       
       name = self.idcombo.get()
       
@@ -535,6 +540,7 @@ class CustomWidget(tk.Frame):
       pdf.print_bold(f"\nTotal mark awarded: {total}")
       
       pdf.output(name + '.pdf', 'F')
+      
 
     def savestudent(self):
       
@@ -846,6 +852,7 @@ class Config(tk.Frame):
       filename = self.config["outcomes"]
       
       if not(self.dummydata):
+        self.outcomes.sort_values(by=['id', 'question'], inplace=True)
         self.outcomes.to_csv(filename, sep=self.config["sep"], index = False, header=False)
       
       self.display = self.outcomes.merge(self.classlist, left_on='id', right_on='id', right_index=False, how="left")
@@ -1129,7 +1136,7 @@ class Config(tk.Frame):
         self.winfo_toplevel().title("QMS Grader: " + self.config["module"] + " " + self.config["assessment"])
         
         self.postloaddatafresh()
-        self.owner.refresh()
+        self.owner.refresh(True)
         
       except Exception as e:
         
@@ -1161,7 +1168,7 @@ class StatusBar(tk.Frame):
       tk.Frame.__init__(self, parent)
       self.label = tk.Label(self, bd = 1, relief = tk.SUNKEN, anchor = "w")
       self.label.pack(fill="x")
-      self.default = "version 1.0.10.BETA"
+      self.default = "version 1.0.11.BETA"
       
    def settext(self, text, warning=False):
       
@@ -1628,7 +1635,7 @@ class GUI():
     self.bank.loaddata(self.config.config["commentbank"])
     self.bank.refresh()
   
-  def refresh(self):
+  def refresh(self, logprogress = False):
     
     self.config.preparesummarytables()
     
@@ -1637,7 +1644,9 @@ class GUI():
     self.totals.refresh(self.config.totals)
     self.distribution.refresh(self.config.distribution)
     
-    self.config.logmessage(f"Feedback for {len(self.config.outcomes.id.unique())} of {len(self.config.classlist)} students")
+    if logprogress:
+      self.config.logmessage(f"Feedback for {len(self.config.outcomes.id.unique())} of {len(self.config.classlist)} students")
+      
     self.sb.settext("")
   
   def mainloop(self):
