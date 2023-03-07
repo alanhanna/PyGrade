@@ -453,11 +453,20 @@ class CustomWidget(tk.Frame):
     def pdf(self, event=None):
       
       self.savestudent()
+      self.pdfonestudent()
+      
+    def pdfonestudent(self):
+      #load and export to pdf
+      #calling functions to take case of saving if necessary
       
       df = self.owner.config.questions
       
       outcomes = self.owner.config.outcomes[self.owner.config.outcomes.id == self.sid]
       outcomes["major"] = [x.split('.',1)[0] for x in outcomes.question]
+      
+      #Ignore any students who have no feedbacks or no marks
+      if outcomes.score.sum(skipna=True)==0 and len([x for x in outcomes.feedback if x!=""])==0:
+        return False
 
       firstname = self.owner.config.classlist.loc[self.owner.config.classlist.id == self.sid, 'first'].iat[0]
       
@@ -540,6 +549,7 @@ class CustomWidget(tk.Frame):
       pdf.print_bold(f"\nTotal mark awarded: {total}")
       
       pdf.output(name + '.pdf', 'F')
+      return True
       
 
     def savestudent(self):
@@ -715,12 +725,15 @@ class CustomWidget(tk.Frame):
         if sid in self.owner.config.outcomes.id.unique():
           
           try:
+            self.sid = sid
             self.idcombo.current(i)
             self.loadstudent(sid)
             
-            self.pdf()
-            self.owner.config.logmessage(f"PDF exported for {self.idcombo.get()}")
-            count += 1
+            if self.pdfonestudent():
+              self.owner.config.logmessage(f"PDF exported for {self.idcombo.get()}")
+              count += 1
+            else:
+              self.owner.config.logmessage(f"Skipping {sid}: no feedback recorded")
             
           except:
             self.owner.config.logmessage(f"Error exporting PDF for {sid}", alert = True)
@@ -1034,7 +1047,7 @@ class Config(tk.Frame):
             json.dump(self.config,f, indent=4)
           
           #Create default data (some columns need to be strings!)
-          self.questions = pd.DataFrame({"question":list(range(1,n+1))+['O'], "description":["Q"+str(i) for i in range(1,n+1)]+['Ovearall'], "marks":[10.0]*n+[""]})
+          self.questions = pd.DataFrame({"question":list(range(1,n+1))+['O'], "description":["Q"+str(i) for i in range(1,n+1)]+['Overall'], "marks":[10.0]*n+[""]})
           self.classlist = pd.DataFrame({"id":["100000"+str(i) for i in range(1,10)], "first":["john"]*9, "last":['smith']*9})
           self.feedback = pd.DataFrame({"question":list(itertools.chain.from_iterable([[i,i] for i in range(1,n+1)]))+["O"], "score":[4,7]*n+[""], "feedback":["good", "bad"]*n+["Good work"]})
           self.outcomes = pd.DataFrame({"id":[], "question":[], "score":[], "feedback":[]})
@@ -1168,7 +1181,7 @@ class StatusBar(tk.Frame):
       tk.Frame.__init__(self, parent)
       self.label = tk.Label(self, bd = 1, relief = tk.SUNKEN, anchor = "w")
       self.label.pack(fill="x")
-      self.default = "version 1.0.11.BETA"
+      self.default = "version 1.0.12.BETA"
       
    def settext(self, text, warning=False):
       
