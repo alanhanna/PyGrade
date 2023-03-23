@@ -85,6 +85,34 @@ class Config(tk.Frame):
 
 
 #------------------------------------------------------------------------------
+class StatusBar(tk.Frame):
+  
+   def __init__(self, parent):
+      tk.Frame.__init__(self, parent)
+      self.label = tk.Label(self, bd = 1, relief = tk.SUNKEN, anchor = "w")
+      self.label.pack(fill="x")
+      self.default = "version 1.0.1.BETA"
+      
+   def settext(self, text, warning=False):
+      
+     if text == "":
+       self.label.config(text = self.default)
+       warning = False
+     else:
+       self.label.config(text = text)
+      
+     if warning:
+       self.label.config(fg="red")
+     else:
+       self.label.config(fg="black")
+      
+     self.label.update_idletasks()
+      
+   def clear(self):
+      self.label.config(text="")
+      self.label.update_idletasks()
+
+#------------------------------------------------------------------------------
 class CommentBankGUI():
   
   def __init__(self):
@@ -131,6 +159,11 @@ class CommentBankGUI():
     # add frames to notebook
     self.notebook.add(self.frame1, text='Configuration')
     self.notebook.add(self.frame2, text='Comment Bank')
+    
+    #Create status bar
+    self.sb=StatusBar(self.root)
+    self.sb.pack(pady=0, fill='x', expand=False, side = "bottom")
+    self.sb.settext("")
 
   def refresh(self, filename):
     self.bank.loaddata(filename)
