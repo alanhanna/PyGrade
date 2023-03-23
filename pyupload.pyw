@@ -26,13 +26,18 @@ pd.options.mode.chained_assignment = None
 
 
 #------------------------------------------------------------------------------
-class Canvas(tk.Frame):
+class CanvasConfig(tk.Frame):
   
     def __init__(self, parent, owner):
       tk.Frame.__init__(self, parent)
       
+      self.config = {}
       self.owner = owner
       self.df = pd.DataFrame()
+      
+      self.apikey = None
+      self.courseid = None
+      self.assignmentid = None
       
       self.apirul = "https://canvas.qub.ac.uk/"
       self.delimiter = ","
@@ -42,46 +47,54 @@ class Canvas(tk.Frame):
       self.f1.columnconfigure(0, weight=1)
       self.f1.rowconfigure(0, weight=1)
       
-      self.lblmodulenumber = tk.Label(self.f1, text="Canvas Course id", anchor='w')
-      self.lblmodulenumber.grid(row = 0, column = 0, sticky = 'w', pady=5, padx = 2)
-      
-      self.lblassignmentnumber = tk.Label(self.f1, text="Canvas Assignment id", anchor='w')
-      self.lblassignmentnumber.grid(row = 1, column = 0, sticky = 'w', pady=5, padx = 2)
+      self.lblapiurl = tk.Label(self.f1, text="API URL", anchor='w')
+      self.lblapiurl.grid(row = 0, column = 0, sticky = 'w', pady=5, padx = 2)
       
       self.lblcanvasapikey = tk.Label(self.f1, text="API Key", anchor='w')
-      self.lblcanvasapikey.grid(row = 2, column = 0, sticky = 'w', pady=5, padx = 2)
+      self.lblcanvasapikey.grid(row = 1, column = 0, sticky = 'w', pady=5, padx = 2)
+      
+      self.lblmodulenumber = tk.Label(self.f1, text="Canvas Course id", anchor='w')
+      self.lblmodulenumber.grid(row =2, column = 0, sticky = 'w', pady=5, padx = 2)
+      
+      self.lblassignmentnumber = tk.Label(self.f1, text="Canvas Assignment id", anchor='w')
+      self.lblassignmentnumber.grid(row = 3, column = 0, sticky = 'w', pady=5, padx = 2)
       
       self.lblfolder = tk.Label(self.f1, text="Assignment Directory", anchor='w')
-      self.lblfolder.grid(row = 3, column = 0, sticky = 'w', pady=5, padx = 2)
+      self.lblfolder.grid(row = 4, column = 0, sticky = 'w', pady=5, padx = 2)
       
       self.lblfile = tk.Label(self.f1, text="Feedback File", anchor='w')
-      self.lblfile.grid(row = 4, column = 0, sticky = 'w', pady=5, padx = 2)
+      self.lblfile.grid(row = 5, column = 0, sticky = 'w', pady=5, padx = 2)
       
-      self.svmodulenumber = StringVar()
-      w = tk.Entry(self.f1, width=5, justify='left', textvariable=self.svmodulenumber)
+      self.svapiurl = StringVar()
+      self.svapiurl.set(self.apirul)
+      w = tk.Entry(self.f1, width=5, justify='left', textvariable=self.svapiurl)
       w.grid(row = 0, column = 1, columnspan =2, sticky = 'we', pady=5, padx = 2)
-      
-      self.svassignmentnumber = StringVar()
-      x = tk.Entry(self.f1, width=5, justify='left', textvariable=self.svassignmentnumber)
-      x.grid(row = 1, column = 1, columnspan =2, sticky = 'we', pady=5, padx = 2)
       
       self.svapikey = StringVar()
       y = tk.Entry(self.f1, width=5, justify='left', textvariable=self.svapikey)
-      y.grid(row = 2, column = 1, columnspan =2, sticky = 'we', pady=5, padx = 2)
+      y.grid(row = 1, column = 1, columnspan =2, sticky = 'we', pady=5, padx = 2)
+      
+      self.svmodulenumber = StringVar()
+      w = tk.Entry(self.f1, width=5, justify='left', textvariable=self.svmodulenumber)
+      w.grid(row = 2, column = 1, columnspan =2, sticky = 'we', pady=5, padx = 2)
+      
+      self.svassignmentnumber = StringVar()
+      x = tk.Entry(self.f1, width=5, justify='left', textvariable=self.svassignmentnumber)
+      x.grid(row = 3, column = 1, columnspan =2, sticky = 'we', pady=5, padx = 2)
       
       self.lblfolderselected = tk.Label(self.f1, text="...", anchor='w')
-      self.lblfolderselected.grid(row = 3, column = 1, sticky = 'w', pady=5, padx = 2)
+      self.lblfolderselected.grid(row = 4, column = 1, sticky = 'w', pady=5, padx = 2)
       
       self.lblfileselected = tk.Label(self.f1, text="...", anchor='w')
-      self.lblfileselected.grid(row = 4, column = 1, sticky = 'w', pady=5, padx = 2)
+      self.lblfileselected.grid(row = 5, column = 1, sticky = 'w', pady=5, padx = 2)
       
       self.btnfolder = tk.Button(self.f1, text="...", anchor='e')
-      self.btnfolder.grid(row=3, column=3, padx=5, sticky='w')
+      self.btnfolder.grid(row=4, column=3, padx=5, sticky='w')
       self.btnfolder.bind("<Button-1>", self.selectfolder)
       self.btnfolder.columnconfigure(3, weight=0)
       
       self.btnfile = tk.Button(self.f1, text="...", anchor='e')
-      self.btnfile.grid(row=4, column=3, padx=5, sticky='w')
+      self.btnfile.grid(row=5, column=3, padx=5, sticky='w')
       self.btnfile.bind("<Button-1>", self.selectfile)
       self.btnfile.columnconfigure(3, weight=0)
       
@@ -129,7 +142,7 @@ class Canvas(tk.Frame):
       self.cboverwrite = tk.Checkbutton(self.f2, text='overwrite',variable=self.overwrite, onvalue=1, offvalue=0)# command=self.togglereturn)
       self.cboverwrite.grid(row=4, column=7, padx=0, sticky='e')
       
-      self.log = scrolledtext.ScrolledText(self, undo=False, height = 20)
+      self.log = scrolledtext.ScrolledText(self, undo=False, height = 15)
       self.log.tag_config("highlight", foreground="red")
       self.log.grid(row = 2, column = 0, columnspan=2, sticky = 'news', padx=5, pady=5)
       self.log.configure(state='disabled')
@@ -184,31 +197,39 @@ class Canvas(tk.Frame):
         
         if "apirul" in self.config:
           self.apirul = self.config["apirul"]
+          self.svapiurl.set(self.apirul)
           
         if "delimiter" in self.config:
           self.delimiter = self.config["delimiter"]
         
-        self.svmodulenumber.set(self.config["courseid"])
-        self.svassignmentnumber.set(self.config["assignmentid"])
-        self.svapikey.set(self.config["apikey"])
+        if "courseid" in self.config:
+          self.svmodulenumber.set(self.config["courseid"])
         
-        self.folder = self.config["uploadfolder"]
-        self.lblfolderselected.config(text=self.folder)
-        self.lblfolderselected.update_idletasks()
+        if "assignmentid" in self.config:
+          self.svassignmentnumber.set(self.config["assignmentid"])
         
-        #Validate folder
-        if not(os.path.isdir(self.folder)):
-          self.logmessage("\nInvalid folder name supplied: "+self.folder, alert = True)
-          self.logmessage("Remember that paths must use double backslashes \\\\")
+        if "apikey" in self.config:
+          self.svapikey.set(self.config["apikey"])
         
-        self.feedbackfile = self.config["feedbackfile"]
-        self.lblfileselected.config(text=self.feedbackfile)
-        self.lblfileselected.update_idletasks()
+        if "uploadfolder" in self.config:
+          self.folder = self.config["uploadfolder"]
+          self.lblfolderselected.config(text=self.folder)
+          self.lblfolderselected.update_idletasks()
         
-        #Validate file name
-        if not(os.path.isfile(self.feedbackfile)):
-          self.logmessage("\nInvalid file path supplied: "+self.feedbackfile, alert = True)
-          self.logmessage("Remember that paths must use double backslashes \\\\")
+          #Validate folder
+          if not(os.path.isdir(self.folder)):
+            self.logmessage("\nInvalid folder name supplied: "+self.folder, alert = True)
+            self.logmessage("Remember that paths must use double backslashes \\\\")
+        
+        if "feedbackfile" in self.config:
+          self.feedbackfile = self.config["feedbackfile"]
+          self.lblfileselected.config(text=self.feedbackfile)
+          self.lblfileselected.update_idletasks()
+        
+          #Validate file name
+          if not(os.path.isfile(self.feedbackfile)):
+            self.logmessage("\nInvalid file path supplied: "+self.feedbackfile, alert = True)
+            self.logmessage("Remember that paths must use double backslashes \\\\")
         
         return 'break'
       
@@ -220,6 +241,14 @@ class Canvas(tk.Frame):
     def saveconfig(self, event=None):
       
       try:
+        
+        self.readconfig()
+
+        #update dictionary for values are are not event triggered
+        self.config["courseid"] = int(self.svmodulenumber.get())
+        self.config["assignmentid"] = int(self.svassignmentnumber.get())
+        self.config["apikey"] = self.svapikey.get()        
+        self.config["apirul"] = self.svapiurl.get()
         
         files = [('config files','*.config')]
         
@@ -234,18 +263,25 @@ class Canvas(tk.Frame):
       except:
         self.logmessage("Config save failed", True)
         return 'break'
+    
+    def readconfig(self):
       
+      #read values fron controls
+      self.courseid = int(self.svmodulenumber.get())
+      self.assignmentid = int(self.svassignmentnumber.get())
+      self.apikey = self.svapikey.get()
+      self.apiurl = self.svapiurl.get()
+    
     
     def connect(self, event=None):
       
       try:
-        self.apirul = "https://canvas.qub.ac.uk/"
-        self.courseid = int(self.svmodulenumber.get())
-        self.assignmentid = int(self.svassignmentnumber.get())
-        self.apikey = self.svapikey.get()
+        
+        self.readconfig()
         
         self.canvas = cvs(self.apirul, self.apikey)
         self.course = self.canvas.get_course(self.courseid)
+        
         self.logmessage(self.course.course_code + " > " + self.course.name)
         self.assignment = self.course.get_assignment(self.assignmentid)
         self.logmessage("Assignment > "+str(self.assignment))
@@ -300,7 +336,7 @@ class Canvas(tk.Frame):
               self.df.canvasscore.loc[rowid[0]] = s.score
             
         #update the grid on students on the dataframe tab
-        self.owner.mapping.refresh(self.df)
+        self.owner.mappingtab.refresh(self.df)
         
       except Exception as e:
          self.logmessage("Error connecting to Canvas with supplied details", True)
@@ -325,7 +361,7 @@ class Canvas(tk.Frame):
       self.logmessage(f"\nMatched files for {n} of {m} students", False)
       
       #update the grid on students on the dataframe tab
-      self.owner.mapping.refresh(self.df)
+      self.owner.mappingtab.refresh(self.df)
 
 
     def uploadfiles(self, event=None):
@@ -358,7 +394,7 @@ class Canvas(tk.Frame):
             self.logmessage(f"{row.studentname}: uploaded {row.file}", False)
         
         #update the grid on students on the dataframe tab
-        self.owner.mapping.refresh(self.df)
+        self.owner.mappingtab.refresh(self.df)
         self.logmessage("File upload complete")
         
       except Exception as e:
@@ -389,7 +425,7 @@ class Canvas(tk.Frame):
         self.df = pd.merge(left = self.df, right = self.feedback, left_on='sid', right_on='sid', how = 'left')
         
         #update the grid on students on the dataframe tab
-        self.owner.mapping.refresh(self.df)
+        self.owner.mappingtab.refresh(self.df)
       
       except Exception as e:
         self.logmessage("Error mapping feedback to students", True)
@@ -451,7 +487,7 @@ class StatusBar(tk.Frame):
       tk.Frame.__init__(self, parent)
       self.label = tk.Label(self, bd = 1, relief = tk.SUNKEN, anchor = "w")
       self.label.pack(fill="x")
-      self.default = "version 1.0.2.BETA"
+      self.default = "version 1.0.3.BETA"
       
    def settext(self, text, warning=False):
       
@@ -534,14 +570,14 @@ class GUI():
     self.sb.pack(pady=0, fill='x', expand=False, side = "bottom")
     
     #Create custom config frame for first tab
-    self.config = Canvas(self.frame1, self)
-    self.config.pack(fill='both', expand=True, anchor = 'n')
+    self.canvastab = CanvasConfig(self.frame1, self)
+    self.canvastab.pack(fill='both', expand=True, anchor = 'n')
     
-    self.mapping = PandaFrame(self.frame2, self, self.config.df)
-    self.mapping.pack(fill='both', expand=True, anchor = 'n')
+    self.mappingtab = PandaFrame(self.frame2, self, self.canvastab.df)
+    self.mappingtab.pack(fill='both', expand=True, anchor = 'n')
     
     # add frames to notebook
-    self.notebook.add(self.frame1, text='Canvas')
+    self.notebook.add(self.frame1, text='Config')
     self.notebook.add(self.frame2, text='Students')
     
     self.sb.settext("")
